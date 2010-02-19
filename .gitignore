@@ -1,0 +1,15 @@
+# ignore generated .c files, and other module build traces
+*~
+*.c
+*.bs
+blib/
+pm_to_blib/
+Build
+_build*
+Makefile
+Makefile.old
+*.tar.gz
+.lwpcookies
+Text-Diff3-*
+cover_db
+ppport.h
