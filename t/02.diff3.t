@@ -179,6 +179,14 @@ __END__
 --- expected
 [[2, 2,2, 2,2, 2,1], [2, 4,4, 4,4, 3,2]]
 
+=== 0, 1 append at last conflict
+--- input
+[qw(a b c d e f)],
+[qw(a b c d)],
+[qw(a b c d e F)],
+--- expected
+[['A', 5,6, 5,6, 5,4]]
+
 === combination
 --- input
 [qw(A A b c     f g h i j K l m n O p Q R s)],
