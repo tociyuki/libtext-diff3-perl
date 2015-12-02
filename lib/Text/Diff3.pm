@@ -3,7 +3,7 @@ use 5.006;
 use strict;
 use warnings;
 
-use version; our $VERSION = '0.10';
+use version; our $VERSION = '0.12';
 
 our @EXPORT_OK = qw(diff3 merge diff);
 
@@ -44,43 +44,40 @@ sub import {
 # the three-way diff based on the GNU diff3.c by R. Smith.
 sub diff3 {
     my($text0, $text2, $text1) = @_;
-    # diff result => [[$cmd, $loA, $hiA, $loB, $hiB], ...]
+    # diff result => [[$symbol, $a0, $a1, $b0, $b1], ...]
     my @diff2 = (
-        diff($text2, $text0),
-        diff($text2, $text1),
+        diff($text2, $text0),   # mytext - original
+        diff($text2, $text1),   # yourtext - original
     );
     my $diff3 = [];
     my $range3 = [undef,  0, 0,  0, 0,  0, 0];
     while (@{$diff2[0]} || @{$diff2[1]}) {
-        # find a continual range in text2 $lo2..$hi2
-        # changed by text0 or by text1.
+        # find a continual range in @{$text2}[$lo2 .. $hi2]
+        # changed by text0 or by @{$text1}.
         #
         #  diff2[0]     222    222222222
         #     text2  ...L!!!!!!!!!!!!!!!!!!!!H...
         #  diff2[1]       222222   22  2222222
         my @range2 = ([], []);
-        my $i =
-              ! @{$diff2[0]} ? 1
-            : ! @{$diff2[1]} ? 0
-            : $diff2[0][0][1] <= $diff2[1][0][1] ? 0
-            : 1;
-        my $j = $i;
-        my $k = $i ^ 1;
-        my $hi = $diff2[$j][0][2];
+        my $i = ! @{$diff2[0]} ? 1
+              : ! @{$diff2[1]} ? 0
+              : $diff2[0][0][1] <= $diff2[1][0][1] ? 0
+              : 1;
+        my($j, $k) = ($i, 1 - $i);
+        my $a1_j = $diff2[$j][0][2];
         push @{$range2[$j]}, shift @{$diff2[$j]};
-        while (@{$diff2[$k]} && $diff2[$k][0][1] <= $hi + 1) {
-            my $hi_k = $diff2[$k][0][2];
+        while (@{$diff2[$k]} && $diff2[$k][0][1] <= $a1_j + 1) {
+            my $a1_k = $diff2[$k][0][2];
             push @{$range2[$k]}, shift @{$diff2[$k]};
-            if ($hi < $hi_k) {
-                $hi = $hi_k;
-                $j = $k;
-                $k = $k ^ 1;
+            if ($a1_j < $a1_k) {
+                $a1_j = $a1_k;
+                ($j, $k) = ($k, $j);
             }
         }
         my $lo2 = $range2[$i][ 0][1];
         my $hi2 = $range2[$j][-1][2];
-        # take the corresponding ranges in text0 $lo0..$hi0
-        # and in text1 $lo1..$hi1.
+        # take the corresponding ranges
+        # in @{$text0}[$lo0 .. $hi0] and in @{$text1}[$lo1 .. $hi1].
         #
         #     text0  ..L!!!!!!!!!!!!!!!!!!!!!!!!!!!!H...
         #  diff2[0]     222    222222222
@@ -226,6 +223,13 @@ sub _assoc_range {
     return;
 }
 
+sub _compare2d {
+    my($a, $b) = @_;
+    return -1 if $a->[0] < $b->[0] && $a->[1] < $b->[1];
+    return 0  if $a->[0] == $b->[0] && $a->[1] == $b->[1];
+    return +1;
+}
+
 # the two-way diff based on the algorithm by P. Heckel.
 sub _diff_heckel {
     my($text_a, $text_b) = @_;
@@ -247,7 +251,7 @@ sub _diff_heckel {
         push @uniq, [$ap{$s}, $bp{$s}];
     }
     %freq = (); %ap = (); %bp = ();
-    @uniq = sort { $a->[0] <=> $b->[0] } @uniq;
+    @uniq = sort { _compare2d ($a, $b); } @uniq;
     my($a1, $b1) = (0, 0);
     while ($a1 <= $#{$text_a} && $b1 <= $#{$text_b}) {
         last if $text_a->[$a1] ne $text_b->[$b1];
@@ -295,7 +299,7 @@ Text::Diff3 - three way text comparison and merging.
 
 =head1 VERSION
 
-0.10
+0.12
 
 =head1 SYNOPSIS
 
@@ -376,7 +380,7 @@ as an array reference.
 
 For example,
 
-    my $diff3 = Text::Diff3::Lite::diff3(
+    my $diff3 = Text::Diff3::diff3(
         [qw(A A b c     f g h i j K l m n O p Q R s)],
         [qw(a   b c d e f g h i j k l m n o p q r s)],
         [qw(a   b c d   f       j K l M n o p 1 2 s t u)],
@@ -411,7 +415,7 @@ This returns an hash reference.
 
 For example,
 
-    my $merge = Text::Diff3::Lite::merge(
+    my $merge = Text::Diff3::merge(
         [qw(A A b c     f g h i j K l m n O p Q R s)],
         [qw(a   b c d e f g h i j k l m n o p q r s)],
         [qw(a   b c d   f       j K l M n o p 1 2 s t u)],
@@ -444,7 +448,7 @@ as an array reference.
 
 For example,
 
-    my $diff = Text::Diff3::Lite::diff(
+    my $diff = Text::Diff3::diff(
         [qw(a b c     f g h i j)],
         [qw(a B c d e f       j)],
     );
@@ -512,7 +516,7 @@ MIZUTANI Tociyuki C<< <tociyuki@gmail.com> >>.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (C) 2011 MIZUTANI Tociyuki
+Copyright (C) 2015 MIZUTANI Tociyuki
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

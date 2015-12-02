@@ -1,4 +1,4 @@
-Text-Diff3 version 0.10
+Text-Diff3 version 0.12
 ============================
 
 Perl module to compute three way diff from texts.
@@ -22,7 +22,7 @@ This module requires no other modules and libraries.
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2005 MIZUTANI Tociyuki
+Copyright (C) 2015 MIZUTANI Tociyuki
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

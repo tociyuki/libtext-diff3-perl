@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Diff3.
 
+0.12  Wed Dec  2 16:34:34 2015 UTC
+    - FIX _diff_heckel sort uniqs with both a and b.
+
+0.11  Fri Nov  1 23:56:17 2013 UTC
+    - correct POD example codes.
+
 0.10  Thu Feb  3 02:52:38 2011 UTC
     - warn a `deprecated' message on import with ':factory' switch.
     - FIX invalid range checking at diff3 conflict cases.
